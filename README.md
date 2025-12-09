@@ -7,3 +7,14 @@
 - Golang Migrate [https://github.com/golang-migrate/migrate]
 
 - Golang Viper [https://github.com/spf13/viper]
+
+- GORM [https://gorm.io/] [https://github.com/go-gorm/gorm]
+
+- ZeroLog (Zero Allocation JSON Logger
+  ) [https://github.com/rs/zerolog]
+
+<!-- COnfig -->
+
+DATABASE_PASSWORD: b3e2ZxmrV_3.Y/i
+
+DATABASE_URL=postgresql://postgres:[YOUR_PASSWORD]@db.qhnotrgvhbqnazqbtsyk.supabase.co:5432/postgres
