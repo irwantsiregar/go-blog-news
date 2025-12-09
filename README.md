@@ -5,3 +5,5 @@
 ## Library Stacks
 
 - Golang Migrate [https://github.com/golang-migrate/migrate]
+
+- Golang Viper [https://github.com/spf13/viper]
