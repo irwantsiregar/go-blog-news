@@ -8,12 +8,25 @@
 
 - Golang Viper [https://github.com/spf13/viper]
 
-- GORM [https://gorm.io/] [https://github.com/go-gorm/gorm]
+- GORM [https://github.com/go-gorm/gorm], Docs [https://gorm.io/docs]
+  `bash
+  $ go get -u gorm.io/gorm
+  $ go get -u gorm.io/driver/postgres
+`
 
 - ZeroLog (Zero Allocation JSON Logger
   ) [https://github.com/rs/zerolog]
 
 - Cobra (Go) [https://github.com/spf13/cobra]
+
+- AWS SDK for Go v2 [https://github.com/aws/aws-sdk-go-v2]
+  `bash
+  $ go get github.com/aws/aws-sdk-go-v2/aws
+  $ go get github.com/aws/aws-sdk-go-v2/config
+  $ go get github.com/aws/aws-sdk-go-v2/service/s3
+`
+
+- Bcrypt [golang.org/x/crypto/bcrypt]
 
 <!--
 ### Configuration
