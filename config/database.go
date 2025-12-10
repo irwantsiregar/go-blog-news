@@ -13,11 +13,11 @@ type Postres struct {
 }
 
 func (cfg Config) ConnectionPostgres() (*Postres, error) {
-	dbConnString := fmt.Sprintf("postgres://%s:%s@=%s:%s/%s",
-		cfg.Psql.Host,
-		cfg.Psql.Port,
+	dbConnString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		cfg.Psql.User,
 		cfg.Psql.Password,
+		cfg.Psql.Host,
+		cfg.Psql.Port,
 		cfg.Psql.DBName,
 	)
 

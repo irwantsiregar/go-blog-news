@@ -13,8 +13,14 @@
 - ZeroLog (Zero Allocation JSON Logger
   ) [https://github.com/rs/zerolog]
 
-<!-- COnfig -->
+- Cobra (Go) [https://github.com/spf13/cobra]
+
+<!--
+### Configuration
 
 DATABASE_PASSWORD: b3e2ZxmrV_3.Y/i
 
 DATABASE_URL=postgresql://postgres:[YOUR_PASSWORD]@db.qhnotrgvhbqnazqbtsyk.supabase.co:5432/postgres
+
+
+ -->
