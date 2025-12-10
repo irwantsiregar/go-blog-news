@@ -1,6 +1,8 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"github.com/spf13/viper"
+)
 
 type App struct {
 	AppPort string `json:"app_port"`
@@ -26,6 +28,8 @@ type Config struct {
 }
 
 func NewConfig() *Config {
+	// fmt.Println("GET DATABASE_HOST::"+ viper.GetString("DATABASE_HOST"))
+	
 	return &Config{
 		App: App{
 			AppPort:      viper.GetString("APP_PORT"),
