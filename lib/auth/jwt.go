@@ -1,0 +1,80 @@
+package auth
+
+import (
+	"bwanews/config"
+	"bwanews/internal/core/domain/entity"
+	"fmt"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+)
+
+type Jwt interface {
+	GenerateToken(data *entity.JwtData) (string, int64, error)
+	VerifyAccessToken(token string) (*entity.JwtData, error)
+}
+
+type Options struct {
+	signingKey string
+	issuer     string
+}
+
+func NewJwt(cfg *config.Config) Jwt {
+	opt := new(Options)
+	opt.signingKey = cfg.App.JwtSecretKey
+	opt.issuer = cfg.App.JtwIssuer
+
+	return opt
+}
+
+func (o *Options) GenerateToken(data *entity.JwtData) (string, int64, error) {
+	now := time.Now().Local()
+	
+	expiresAt := now.Add(24 * time.Hour)
+	
+	data.RegisteredClaims.ExpiresAt = jwt.NewNumericDate(expiresAt)
+	
+	data.RegisteredClaims.Issuer = o.issuer
+
+	data.RegisteredClaims.NotBefore = jwt.NewNumericDate(now)
+
+	accToken := jwt.NewWithClaims(jwt.SigningMethodHS256, data)
+
+	accessToken, err := accToken.SignedString([]byte(o.signingKey))
+	
+	if err != nil {
+		return "", 0, err
+	}
+
+	return accessToken, expiresAt.Unix(), nil
+}
+
+func (o *Options) VerifyAccessToken(token string) (*entity.JwtData, error) {
+	parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("signing method invalid")
+		}
+
+		return []byte(o.signingKey), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if parsedToken.Valid {
+		claims, ok := parsedToken.Claims.(jwt.MapClaims)
+
+		if !ok || parsedToken.Valid {
+			return nil, err
+		}	
+
+		jwtData := &entity.JwtData{
+			UserID: claims["user_id"].(float64),
+		}
+
+		return jwtData, nil
+	}
+
+	return nil, fmt.Errorf("token is not valid")
+}
