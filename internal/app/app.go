@@ -2,6 +2,9 @@ package app
 
 import (
 	"bwanews/config"
+	"bwanews/internal/adapter/handler"
+	"bwanews/internal/adapter/repository"
+	"bwanews/internal/core/service"
 	"bwanews/lib/auth"
 	"bwanews/lib/middleware"
 	"bwanews/lib/pagination"
@@ -22,7 +25,7 @@ import (
 func RunServer() {
 	cfg := config.NewConfig()
 
-	_, err := cfg.ConnectionPostgres()
+	db, err := cfg.ConnectionPostgres()
 
 	if err != nil {
 		log.Fatal().Msgf("Error to connecting to database %v", err)
@@ -33,13 +36,24 @@ func RunServer() {
 	crfR2 := cfg.LoadAwsConfig()
 	_ = s3.NewFromConfig(crfR2)
 
-	_ = auth.NewJwt(cfg)
+	jwt := auth.NewJwt(cfg)
 
 	_ = middleware.NewMiddleware(cfg)
 
 	_ = pagination.NewPagination()
 
 
+	// Repository
+	authrepo := repository.NewAuthRepository(db.DB)
+
+	// Service
+	authService := service.NewAuthService(authrepo, cfg, jwt)
+
+	// Handler
+ 	authHandler := handler.NewAuthHandler(authService)
+
+
+	// Instance Go Fiber
 	app := fiber.New()
 	app.Use(cors.New())
 	app.Use(recover.New())
@@ -50,7 +64,8 @@ func RunServer() {
 		TimeZone:   "Asia/Jakarta",
 	}))
 
-	_ = app.Group("/api")
+	api := app.Group("/api")
+	api.Post("/login", authHandler.Login)
 
 	go func() {
 		if cfg.App.AppPort == "" {

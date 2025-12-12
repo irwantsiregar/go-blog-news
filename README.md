@@ -58,12 +58,24 @@
     $ go get -u github.com/golang-jwt/jwt/v5
   ```
 
+- Fiber - Go Framework [https://gofiber.io/]
+
+  ```bash
+    $ go get github.com/gofiber/fiber/v2
+  ```
+
+- Validator - Go [https://github.com/go-playground/validator]
+
+  ```bash
+    $ go get github.com/go-playground/validator/v10
+  ```
+
 <!--
+
 ### Configuration
 
 DATABASE_PASSWORD: b3e2ZxmrV_3.Y/i
 
 DATABASE_URL=postgresql://postgres:[YOUR_PASSWORD]@db.qhnotrgvhbqnazqbtsyk.supabase.co:5432/postgres
 
-
- -->
+-->
