@@ -22,7 +22,7 @@ func (cfg Config) LoadAwsConfig() aws.Config {
 	)			
 
 	if err != nil {
-		log.Fatal().Err(err).Msgf("[LoadAwsConfig] Failed to load AWS config %v", err)
+		log.Fatal().Msgf("[LoadAwsConfig] Failed to load AWS config %v", err)
 	}
 
 	log.Info().Msg("[LoadAwsConfig] Successfully loaded AWS config")

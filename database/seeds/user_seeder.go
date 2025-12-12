@@ -2,8 +2,8 @@ package seeds
 
 import (
 	"bwanews/internal/core/domain/model"
+	"bwanews/lib/conv"
 
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
 	"github.com/rs/zerolog/log"
@@ -12,7 +12,7 @@ import (
 func SeedRoles(db *gorm.DB) {
 	// Implementation for seeding roles
 
-	bytes, err := bcrypt.GenerateFromPassword([]byte("admin123"), 14)
+	bytes, err := conv.HashPassword("admin123")
 	
 	if err != nil {
 		log.Fatal().Err(err).Msg("[UserSeeder] Failed to hash password")

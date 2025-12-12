@@ -37,8 +37,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Load default config
-		viper.AddConfigPath(".")
-		viper.SetConfigName(".env")
+		viper.SetConfigName(`.env`)
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

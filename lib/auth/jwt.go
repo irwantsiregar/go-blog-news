@@ -19,14 +19,6 @@ type Options struct {
 	issuer     string
 }
 
-func NewJwt(cfg *config.Config) Jwt {
-	opt := new(Options)
-	opt.signingKey = cfg.App.JwtSecretKey
-	opt.issuer = cfg.App.JtwIssuer
-
-	return opt
-}
-
 func (o *Options) GenerateToken(data *entity.JwtData) (string, int64, error) {
 	now := time.Now().Local()
 	
@@ -77,4 +69,13 @@ func (o *Options) VerifyAccessToken(token string) (*entity.JwtData, error) {
 	}
 
 	return nil, fmt.Errorf("token is not valid")
+}
+
+
+func NewJwt(cfg *config.Config) Jwt {
+	opt := new(Options)
+	opt.signingKey = cfg.App.JwtSecretKey
+	opt.issuer = cfg.App.JtwIssuer
+
+	return opt
 }

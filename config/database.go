@@ -9,11 +9,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type Postres struct {
+type Postgres struct {
 	DB *gorm.DB
 }
 
-func (cfg Config) ConnectionPostgres() (*Postres, error) {
+func (cfg Config) ConnectionPostgres() (*Postgres, error) {
 	// dbConnString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 	// 	cfg.Psql.User,
 	// 	cfg.Psql.Password,
@@ -33,21 +33,20 @@ func (cfg Config) ConnectionPostgres() (*Postres, error) {
 	db, err := gorm.Open(postgres.Open(dbConnString), &gorm.Config{})
 	
 	if err != nil {
-		log.Error().Err(err).Msg("[ConnectionPostgres-1] Failed to connect to Postgres database " + cfg.Psql.Host)
+		log.Error().Err(err).Msg("[ConnectionPostgres-1] Failed to connect to database " + cfg.Psql.Host)
 		return nil, err
 	}
 
-	sqlDb, err := db.DB()
-	
+	sqlDB, err := db.DB()
 	if err != nil {
-		log.Error().Err(err).Msg("[ConnectionPostgres-2] Failed to get database instance")
+		log.Error().Err(err).Msg("[ConnectionPostgres-2] Failed to get database connection")
 		return nil, err
 	}
 
 	seeds.SeedRoles(db)
 
-	sqlDb.SetMaxOpenConns(cfg.Psql.DBMaxOpen)
-	sqlDb.SetMaxIdleConns(cfg.Psql.DBMaxIdle)
+	sqlDB.SetMaxOpenConns(cfg.Psql.DBMaxOpen)
+	sqlDB.SetMaxIdleConns(cfg.Psql.DBMaxIdle)
 
-	return &Postres{DB: db}, nil
+	return &Postgres{DB: db}, nil
 }
