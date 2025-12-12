@@ -5,6 +5,7 @@ import (
 	"bwanews/internal/adapter/handler/response"
 	"bwanews/internal/core/domain/entity"
 	"bwanews/internal/core/service"
+	"bwanews/lib/conv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -39,7 +40,8 @@ func (a *authHandler)Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
 	} 
 
-	if validate.Struct(req); err != nil {
+	// Should be "validateLib"
+	if err = conv.ValidateStruct(eq); err != nil {
 		code = "[HANDLER] Login -2"
 		log.Errorw(code, err)
 
@@ -63,6 +65,10 @@ func (a *authHandler)Login(c *fiber.Ctx) error {
 
 		errorResp.Meta.Status = false
 		errorResp.Meta.Message = err.Error()
+
+		if err.Error() == "invalid password" {
+			return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
+		}
 
 		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
 	}

@@ -7,6 +7,7 @@ import (
 	"bwanews/lib/auth"
 	"bwanews/lib/conv"
 	"context"
+	"errors"
 	"time"
 
 	"github.com/gofiber/fiber/v2/log"
@@ -38,7 +39,10 @@ func (a *authService) GetUserByEmail(ctx context.Context, req entity.LoginReques
 
 	if checkPass := conv.CheckPasswordHash(req.Password, result.Password); !checkPass {
 		code = "[SERVICE] GetUserByEmail - 2"
-		log.Errorw(code, "Invalid password")	
+		err = errors.New("invalid password")	
+		
+		log.Errorw(code, err)
+		
 
 		return nil, err
 	}
