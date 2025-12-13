@@ -4,7 +4,7 @@ import "time"
 
 type Category struct {
 	ID        	int64  		`gorm:"id"`
-	Name      	string 		`gorm:"name"`
+	Title      	string 		`gorm:"title"`
 	Slug     	string 		`gorm:"email"`
 	CreatedByID int64  		`gorm:"created_by_id"`
 	User  		User 		`gorm:"foreignKey:CreatedByID"`

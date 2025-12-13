@@ -38,19 +38,22 @@ func RunServer() {
 
 	jwt := auth.NewJwt(cfg)
 
-	_ = middleware.NewMiddleware(cfg)
+	middlewareAuth := middleware.NewMiddleware(cfg)
 
 	_ = pagination.NewPagination()
 
 
 	// Repository
 	authrepo := repository.NewAuthRepository(db.DB)
+	categoryRepo := repository.NewCategoryRepository(db.DB)
 
 	// Service
 	authService := service.NewAuthService(authrepo, cfg, jwt)
+	categoryService := service.NewCategoryService(categoryRepo)
 
 	// Handler
  	authHandler := handler.NewAuthHandler(authService)
+	categoryHandler := handler.NewCategoryHandler(categoryService)
 
 
 	// Instance Go Fiber
@@ -66,6 +69,13 @@ func RunServer() {
 
 	api := app.Group("/api")
 	api.Post("/login", authHandler.Login)
+
+	adminApp := api.Group("/admin")
+	adminApp.Use(middlewareAuth.CheckToken())
+
+	// Category
+	categoryApp := adminApp.Group("/categories")
+	categoryApp.Get("/", categoryHandler.GetCategories)
 
 	go func() {
 		if cfg.App.AppPort == "" {

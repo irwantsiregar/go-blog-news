@@ -41,7 +41,7 @@ func (a *authHandler)Login(c *fiber.Ctx) error {
 	} 
 
 	// Should be "validateLib"
-	if err = conv.ValidateStruct(eq); err != nil {
+	if err = conv.ValidateStruct(req); err != nil {
 		code = "[HANDLER] Login -2"
 		log.Errorw(code, err)
 

@@ -10,14 +10,14 @@ import (
 )
 
 type Middleware interface {
-	CheckToken(token string) fiber.Handler
+	CheckToken() fiber.Handler
 }
 
 type Options struct {
 	authJwt auth.Jwt
 }
 
-func (o *Options) CheckToken(token string) fiber.Handler { 
+func (o *Options) CheckToken() fiber.Handler { 
 	return func(c *fiber.Ctx) error {
 		var errorResponse response.ErrorResponseDefault
 
