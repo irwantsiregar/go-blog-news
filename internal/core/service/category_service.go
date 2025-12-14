@@ -3,10 +3,13 @@ package service
 import (
 	"bwanews/internal/adapter/repository"
 	"bwanews/internal/core/domain/entity"
+	"bwanews/lib/conv"
 	"context"
 
 	"github.com/gofiber/fiber/v2/log"
 )
+
+var err error
 
 type CategoryService interface {
 	GetCategories(ctx context.Context) ([]entity.CategoryEntity, error)
@@ -22,7 +25,21 @@ type categoryService struct {
 
 // CreateCategory implements CategoryService.
 func (c *categoryService) CreateCategory(ctx context.Context, req entity.CategoryEntity) error {
-	panic("unimplemented")
+	slug := conv.GenerateSlug(req.Title)
+
+	req.Slug = slug
+
+	err = c.categoryRepository.CreateCategory(ctx, req)
+
+	if err != nil {
+		code = "[SERVICE] CreateCategory - 1"
+
+		log.Errorw(code, err)
+
+		return err
+	}
+
+	return nil
 }
 
 // DeleteCategory implements CategoryService.

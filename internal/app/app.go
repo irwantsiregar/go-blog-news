@@ -76,6 +76,8 @@ func RunServer() {
 	// Category
 	categoryApp := adminApp.Group("/categories")
 	categoryApp.Get("/", categoryHandler.GetCategories)
+	categoryApp.Post("/", categoryHandler.CreateCategory)
+
 
 	go func() {
 		if cfg.App.AppPort == "" {

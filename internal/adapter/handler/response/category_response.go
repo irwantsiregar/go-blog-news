@@ -10,7 +10,7 @@ type SuccessCategoryResponse struct {
 type DefaultSuccessResponse struct {
 	Meta Meta `json:"meta"`
 	Data interface{} `json:"data,omitempty"`
-	Pagination PaginationResponse `json:"pagination,omitempty"`
+	Pagination *PaginationResponse `json:"pagination,omitempty"`
 }
 
 type PaginationResponse struct {
