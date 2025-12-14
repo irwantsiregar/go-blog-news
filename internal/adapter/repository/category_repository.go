@@ -13,7 +13,7 @@ import (
 
 type CategoryRepository interface {
 	GetCategories(ctx context.Context) ([]entity.CategoryEntity, error)
-	GetCategoryByID(ctx context.Context, id int64) ([]entity.CategoryEntity, error)
+	GetCategoryByID(ctx context.Context, id int64) (*entity.CategoryEntity, error)
 	CreateCategory(ctx context.Context, req entity.CategoryEntity) error
 	EditCategoryByID(ctx context.Context, req entity.CategoryEntity) error
 	DeleteCategory(ctx context.Context, id int64) error
@@ -22,6 +22,7 @@ type CategoryRepository interface {
 type categoryRepository struct {
 	db *gorm.DB
 }
+
 
 // CreateCategory implements CategoryRepository.
 func (c *categoryRepository) CreateCategory(ctx context.Context, req entity.CategoryEntity) error {
@@ -57,15 +58,45 @@ func (c *categoryRepository) CreateCategory(ctx context.Context, req entity.Cate
 	return nil
 }
 
+// EditCategoryByID implements CategoryRepository.
+func (c *categoryRepository) EditCategoryByID(ctx context.Context, req entity.CategoryEntity) error {
+	var countSlug int64
+
+	err = c.db.Table("categories").Where("slug = ?", req.Slug).Count(&countSlug).Error
+
+	if err != nil {
+		code = "[REPOSITORY] EditCategoryByID - 1"
+		log.Errorw(code, err)
+
+		return err
+	}
+
+	countSlug = countSlug + 1
+	slug := fmt.Sprintf("%s-%d", req.Slug, countSlug)
+
+	modelCategory := model.Category{
+		Title: req.Title,
+		Slug: slug,
+		CreatedByID: req.User.ID,
+	}
+
+	err = c.db.Where("id = ?", req.ID).Updates(&modelCategory).Error
+
+	if err != nil {
+		code = "[REPOSITORY] EditCategoryByID - 2"
+		log.Errorw(code, err)
+
+		return err
+	}
+
+	return nil
+}
+
 // DeleteCategory implements CategoryRepository.
 func (c *categoryRepository) DeleteCategory(ctx context.Context, id int64) error {
 	panic("unimplemented")
 }
 
-// EditCategoryByID implements CategoryRepository.
-func (c *categoryRepository) EditCategoryByID(ctx context.Context, req entity.CategoryEntity) error {
-	panic("unimplemented")
-}
 
 // GetCategories implements CategoryRepository.
 func (c *categoryRepository) GetCategories(ctx context.Context) ([]entity.CategoryEntity, error) {
@@ -109,12 +140,31 @@ func (c *categoryRepository) GetCategories(ctx context.Context) ([]entity.Catego
 }
 
 // GetCategoryByID implements CategoryRepository.
-func (c *categoryRepository) GetCategoryByID(ctx context.Context, id int64) ([]entity.CategoryEntity, error) {
-	panic("unimplemented")
+func (c *categoryRepository) GetCategoryByID(ctx context.Context, id int64) (*entity.CategoryEntity, error) {
+	var modelCategory model.Category
+
+	err = c.db.Where("id ?", id).Preload("User").First(&modelCategory).Error
+
+	if err != nil {
+		code = "[REPOSITORY] GetCategoryByID - 1"
+
+		log.Errorw(code, err)
+		return nil, err
+	}
+
+	return &entity.CategoryEntity{
+			ID: modelCategory.ID,
+			Title: modelCategory.Title,
+			Slug: modelCategory.Slug,
+			User: entity.UserEntity{
+				ID: modelCategory.User.ID,
+				Name: modelCategory.User.Name,
+				Email: modelCategory.User.Email,
+				Password: modelCategory.User.Password,
+			},
+		}, nil
 }
 
 func NewCategoryRepository(db *gorm.DB) CategoryRepository {
-	return &categoryRepository{
-		db: db,
-	}
+	return &categoryRepository{ db: db }
 }

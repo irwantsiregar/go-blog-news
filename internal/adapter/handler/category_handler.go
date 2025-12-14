@@ -5,6 +5,7 @@ import (
 	"bwanews/internal/adapter/handler/response"
 	"bwanews/internal/core/domain/entity"
 	"bwanews/internal/core/service"
+	"bwanews/lib/conv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -41,14 +42,14 @@ func (ch *categoryHandler) CreateCategory(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
 	}
 
-	results, err := ch.categoryService.GetCategories(c.Context())
+	_, err := ch.categoryService.GetCategories(c.Context())
 
 	if err = c.BodyParser(&req); err != nil {
 		code = "[HANDLER] CreateCategory - 2"
 		log.Errorw(code, err)
 
 		errorResp.Meta.Status = false
-		errorResp.Meta.Message = "Invalid request body"
+		errorResp.Meta.Message = "Invalid request body"  
 		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
 	}
 
@@ -98,7 +99,83 @@ func (ch *categoryHandler) DeleteCategory(c *fiber.Ctx) error {
 
 // EditCategoryByID implements CategorySHandler.
 func (ch *categoryHandler) EditCategoryByID(c *fiber.Ctx) error {
-	panic("unimplemented")
+	var req request.CategoryRequest
+
+	claims := c.Locals("user").(*entity.JwtData)
+
+	userID := claims.UserID
+
+	if userID == 0 {
+		code = "[HANDLER] EditCategoryByID - 1"
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = "Unauthorized access"
+		return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
+	}
+
+	_, err := ch.categoryService.GetCategories(c.Context())
+
+	if err = c.BodyParser(&req); err != nil {
+		code = "[HANDLER] EditCategoryByID - 2"
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = "Invalid request body"  
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
+	}
+
+	if err = validatorLib.ValidateStruct(req); err != nil {
+		code = "[HANDLER] EditCategoryByID - 3"
+
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+	idParam := c.Params("categoryID")
+
+	id, err := conv.StringToInt64(idParam)
+
+	if err != nil {
+		code = "[HANDLER] EditCategoryByID - 4"
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+	reqEntity := entity.CategoryEntity{
+		ID: id,
+		Title: req.Title,
+		User: entity.UserEntity{
+			ID: int64(userID),
+		},
+	}
+
+	err = ch.categoryService.EditCategoryByID(c.Context(), reqEntity)
+
+	if err != nil {
+		code = "[HANDLER] EditCategoryByID - 5"
+
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
+	}
+
+	defaultSuccessResponse.Data = nil
+	defaultSuccessResponse.Pagination = nil
+	defaultSuccessResponse.Meta.Status = true
+	defaultSuccessResponse.Meta.Message = "Category updated successfully"
+
+	return c.JSON(defaultSuccessResponse)
 }
 
 // GetCategories implements CategorySHandler.
@@ -149,8 +226,60 @@ func (ch *categoryHandler) GetCategories(c *fiber.Ctx) (error) {
 }
 
 // GetCategoryByID implements CategorySHandler.
-func (ch *categoryHandler) GetCategoryByID(c *fiber.Ctx, id int64) ([]entity.CategoryEntity, error) {
-	panic("unimplemented")
+func (ch *categoryHandler) GetCategoryByID(c *fiber.Ctx) error {
+	claims := c.Locals("user").(*entity.JwtData)
+
+	userID := claims.UserID
+
+	if userID == 0 {
+		code = "[HANDLER] GetCategoryByID - 1"
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = "Unauthorized access"
+		return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
+	}
+
+	idParam := c.Params("categoryID")
+
+	id, err := conv.StringToInt64(idParam)
+
+	if err != nil {
+		code = "[HANDLER] GetCategoryByID - 2"
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+
+	result, err := ch.categoryService.GetCategoryByID(c.Context(), id)
+
+	if err != nil {
+		code = "[HANDLER] GetCategoryByID - 3"
+
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
+	}
+
+	categoryResponse := response.SuccessCategoryResponse{
+			ID: id,
+			Title : result.Title,
+			Slug : result.Slug,
+			CreatedByName : result.User.Name,
+	}
+
+	defaultSuccessResponse.Meta.Status = true
+	defaultSuccessResponse.Pagination = nil
+	defaultSuccessResponse.Meta.Message = "Category fetched detail successfully"
+	defaultSuccessResponse.Data = categoryResponse
+
+	return c.JSON(defaultSuccessResponse)
 }
 
 
