@@ -5,9 +5,8 @@ import (
 	"bwanews/internal/adapter/handler/response"
 	"bwanews/internal/core/domain/entity"
 	"bwanews/internal/core/service"
-	"bwanews/lib/conv"
+	validatorLib "bwanews/lib/validator"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 )
@@ -15,7 +14,6 @@ import (
 var err error
 var code string
 var errorResp response.ErrorResponseDefault
-var validate = validator.New()
 
 type AuthHandler interface {
 	Login(c *fiber.Ctx) error
@@ -40,8 +38,7 @@ func (a *authHandler)Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
 	} 
 
-	// Should be "validateLib"
-	if err = conv.ValidateStruct(req); err != nil {
+	if err = validatorLib.ValidateStruct(req); err != nil {
 		code = "[HANDLER] Login -2"
 		log.Errorw(code, err)
 

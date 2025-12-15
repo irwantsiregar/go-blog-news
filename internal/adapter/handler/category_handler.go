@@ -6,6 +6,7 @@ import (
 	"bwanews/internal/core/domain/entity"
 	"bwanews/internal/core/service"
 	"bwanews/lib/conv"
+	validatorLib "bwanews/lib/validator"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
@@ -41,8 +42,6 @@ func (ch *categoryHandler) CreateCategory(c *fiber.Ctx) error {
 		errorResp.Meta.Message = "Unauthorized access"
 		return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
 	}
-
-	_, err := ch.categoryService.GetCategories(c.Context())
 
 	if err = c.BodyParser(&req); err != nil {
 		code = "[HANDLER] CreateCategory - 2"
@@ -113,8 +112,6 @@ func (ch *categoryHandler) EditCategoryByID(c *fiber.Ctx) error {
 		errorResp.Meta.Message = "Unauthorized access"
 		return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
 	}
-
-	_, err := ch.categoryService.GetCategories(c.Context())
 
 	if err = c.BodyParser(&req); err != nil {
 		code = "[HANDLER] EditCategoryByID - 2"
