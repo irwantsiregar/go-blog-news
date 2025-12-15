@@ -38,6 +38,7 @@ func (c *categoryRepository) CreateCategory(ctx context.Context, req entity.Cate
 	}
 
 	countSlug = countSlug + 1
+	
 	slug := fmt.Sprintf("%s-%d", req.Slug, countSlug)
 
 	modelCategory := model.Category{
@@ -66,6 +67,7 @@ func (c *categoryRepository) EditCategoryByID(ctx context.Context, req entity.Ca
 
 	if err != nil {
 		code = "[REPOSITORY] EditCategoryByID - 1"
+		
 		log.Errorw(code, err)
 
 		return err
@@ -84,6 +86,7 @@ func (c *categoryRepository) EditCategoryByID(ctx context.Context, req entity.Ca
 
 	if err != nil {
 		code = "[REPOSITORY] EditCategoryByID - 2"
+		
 		log.Errorw(code, err)
 
 		return err
@@ -100,6 +103,7 @@ func (c *categoryRepository) DeleteCategory(ctx context.Context, id int64) error
 
 	if err != nil {
 		code = "[REPOSITORY] DeleteCategory - 1"
+		
 		log.Errorw(code, err)
 
 		return err
@@ -113,6 +117,7 @@ func (c *categoryRepository) DeleteCategory(ctx context.Context, id int64) error
 
 	if err != nil {
 		code = "[REPOSITORY] DeleteCategory - 2"
+		
 		log.Errorw(code, err)
 
 		return err
@@ -130,8 +135,9 @@ func (c *categoryRepository) GetCategories(ctx context.Context) ([]entity.Catego
 
 	if err != nil {
 		code = "[REPOSITORY] GetCategories - 1"
-
+		
 		log.Errorw(code, err)
+
 		return nil, err
 	}
 
@@ -141,13 +147,14 @@ func (c *categoryRepository) GetCategories(ctx context.Context) ([]entity.Catego
 		err = errors.New("data not found")
 		
 		log.Errorw(code, err)
+
 		return nil, err
 	}
 
-	var response []entity.CategoryEntity
+	var responses []entity.CategoryEntity
 
 	for _, val := range modelCategories {
-		response = append(response, entity.CategoryEntity{
+		responses = append(responses, entity.CategoryEntity{
 			ID: val.ID,
 			Title: val.Title,
 			Slug: val.Slug,
@@ -160,7 +167,7 @@ func (c *categoryRepository) GetCategories(ctx context.Context) ([]entity.Catego
 		})
 	}
 
-	panic("unimplemented")
+	return responses, nil
 }
 
 // GetCategoryByID implements CategoryRepository.
@@ -173,6 +180,7 @@ func (c *categoryRepository) GetCategoryByID(ctx context.Context, id int64) (*en
 		code = "[REPOSITORY] GetCategoryByID - 1"
 
 		log.Errorw(code, err)
+
 		return nil, err
 	}
 

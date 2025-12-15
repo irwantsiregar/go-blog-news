@@ -9,8 +9,6 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 )
 
-var err error
-
 type CategoryService interface {
 	GetCategories(ctx context.Context) ([]entity.CategoryEntity, error)
 	GetCategoryByID(ctx context.Context, id int64) (*entity.CategoryEntity, error)
