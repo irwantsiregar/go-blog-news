@@ -14,7 +14,7 @@ var err error
 
 type ContentService interface {
 	GetContents(ctx context.Context) ([]entity.ContentEntity, error)
-	GetContent(ctx context.Context, id int64) (*entity.ContentEntity, error)
+	GetContentByID(ctx context.Context, id int64) (*entity.ContentEntity, error)
 	CreateContent(ctx context.Context, req entity.ContentEntity) error
 	EditContentByID(ctx context.Context, req entity.ContentEntity) error
 	DeleteContent(ctx context.Context, id int64) error
@@ -42,9 +42,19 @@ func (c *contentService) EditContentByID(ctx context.Context, req entity.Content
 	panic("unimplemented")
 }
 
-// GetContent implements ContentService.
-func (c *contentService) GetContent(ctx context.Context, id int64) (*entity.ContentEntity, error) {
-	panic("unimplemented")
+// GetContentByID implements ContentService.
+func (c *contentService) GetContentByID(ctx context.Context, id int64) (*entity.ContentEntity, error) {
+	result, err := c.contentRepository.GetContentByID(ctx, id)
+	
+	if err != nil {
+		code = "[SERVICE] GetContentByID - 1"
+		
+		log.Errorw(code, err)
+
+		return nil, err
+	}
+
+	return result, nil	
 }
 
 // GetContents implements ContentService.

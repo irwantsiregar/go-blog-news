@@ -2,6 +2,7 @@ package app
 
 import (
 	"bwanews/config"
+	"bwanews/internal/adapter/cloudflare"
 	"bwanews/internal/adapter/handler"
 	"bwanews/internal/adapter/repository"
 	"bwanews/internal/core/service"
@@ -32,11 +33,18 @@ func RunServer() {
 		return
 	}
 
+	err = os.MkdirAll("./temp/content", 0755)
+	if err != nil {
+		log.Fatal().Msgf("Error creating temp directory: %v", err)
+		return
+	}
+
 	// CloudflareR2
 	crfR2 := cfg.LoadAwsConfig()
-	_ = s3.NewFromConfig(crfR2)
+	s3Client := s3.NewFromConfig(crfR2)
+	r2Adapter := cloudflare.NewCloudflareR2Adapter(s3Client, cfg)
 
-	jwt := auth.NewJwt(cfg)
+	jwt := auth.NewJwt(cfg) 
 
 	middlewareAuth := middleware.NewMiddleware(cfg)
 
@@ -46,14 +54,18 @@ func RunServer() {
 	// Repository
 	authrepo := repository.NewAuthRepository(db.DB)
 	categoryRepo := repository.NewCategoryRepository(db.DB)
+	contentRepo := repository.NewContentRepository(db.DB)
 
 	// Service
 	authService := service.NewAuthService(authrepo, cfg, jwt)
 	categoryService := service.NewCategoryService(categoryRepo)
+	contentService := service.NewContentService(contentRepo, cfg, r2Adapter)
+
 
 	// Handler
  	authHandler := handler.NewAuthHandler(authService)
 	categoryHandler := handler.NewCategoryHandler(categoryService)
+	contentHandler := handler.NewContentHandler(contentService)
 
 
 	// Instance Go Fiber
@@ -80,6 +92,16 @@ func RunServer() {
 	categoryApp.Put("/:categoryID", categoryHandler.EditCategoryByID)
 	categoryApp.Post("/:categoryID", categoryHandler.GetCategoryByID)
 	categoryApp.Delete("/:categoryID", categoryHandler.DeleteCategory)
+
+	
+	// Content
+	contentApp := adminApp.Group("/contents")
+	contentApp.Get("/", contentHandler.GetContents)
+	contentApp.Post("/", contentHandler.CreateContent)
+	contentApp.Put("/:contentID", contentHandler.EditContentByID)
+	contentApp.Post("/:contentID", contentHandler.GetContentByID)
+	contentApp.Delete("/:contentID", contentHandler.DeleteContent)
+	contentApp.Post("/upload-image", contentHandler.UploadImageR2)
 
 
 	go func() {

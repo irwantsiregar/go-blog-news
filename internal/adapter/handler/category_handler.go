@@ -15,11 +15,11 @@ import (
 var defaultSuccessResponse response.DefaultSuccessResponse
 
 type CategoryHandler interface {
-	GetCategories(c *fiber.Ctx) 
-	GetCategoryByID(c *fiber.Ctx)
-	CreateCategory(c *fiber.Ctx) 
-	EditCategoryByID(c *fiber.Ctx)
-	DeleteCategory(c *fiber.Ctx) 
+	GetCategories(c *fiber.Ctx) error
+	GetCategoryByID(c *fiber.Ctx) error
+	CreateCategory(c *fiber.Ctx) error
+	EditCategoryByID(c *fiber.Ctx) error
+	DeleteCategory(c *fiber.Ctx) error
 }
 
 type categoryHandler struct {
@@ -326,7 +326,7 @@ func (ch *categoryHandler) GetCategoryByID(c *fiber.Ctx) error {
 }
 
 
-func NewCategoryHandler(categoryService service.CategoryService) *categoryHandler {
+func NewCategoryHandler(categoryService service.CategoryService) CategoryHandler {
 	return &categoryHandler{
 		categoryService: categoryService,
 	}
