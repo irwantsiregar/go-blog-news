@@ -15,6 +15,7 @@ import (
 )
 
 var code string
+var err error
 
 type AuthService interface {
 	GetUserByEmail(ctx context.Context, req entity.LoginRequest) (*entity.AccessToken, error)
