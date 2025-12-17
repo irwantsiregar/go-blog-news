@@ -14,7 +14,7 @@ type ContentRepository interface {
 	GetContents(ctx context.Context) ([]entity.ContentEntity, error)
 	GetContentByID(ctx context.Context, id int64) (*entity.ContentEntity, error)
 	CreateContent(ctx context.Context, req entity.ContentEntity) error
-	UpdateContent(ctx context.Context, req entity.ContentEntity) error
+	EditCategoryByID(ctx context.Context, req entity.ContentEntity) error
 	DeleteContent(ctx context.Context, id int64) error
 }
 
@@ -150,8 +150,8 @@ func (c *contentRepository) GetContents(ctx context.Context) ([]entity.ContentEn
 	return responses, nil	
 }
 
-// UpdateContent implements ContentRepository.
-func (c *contentRepository) UpdateContent(ctx context.Context, req entity.ContentEntity) error {
+// EditCategoryByID implements ContentRepository.
+func (c *contentRepository) EditCategoryByID(ctx context.Context, req entity.ContentEntity) error {
 	panic("unimplemented")
 }
 

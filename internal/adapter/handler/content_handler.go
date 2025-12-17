@@ -7,6 +7,8 @@ import (
 	"bwanews/internal/core/service"
 	"bwanews/lib/conv"
 	validatorLib "bwanews/lib/validator"
+	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -150,7 +152,88 @@ func (ch *contentHandler) DeleteContent(c *fiber.Ctx) error {
 
 // EditContentByID implements ContentHandler.
 func (ch *contentHandler) EditContentByID(c *fiber.Ctx) error {
-	panic("unimplemented")
+	var req request.ContentRequest
+
+	claims := c.Locals("user").(*entity.JwtData)
+
+	userID := claims.UserID
+
+	if userID == 0 {
+		code = "[HANDLER] EditContentByID - 1"
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = "Unauthorized access"
+		return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
+	}
+
+	if err = c.BodyParser(&req); err != nil {
+		code = "[HANDLER] EditContentByID - 2"
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = "Invalid request body"  
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
+	}
+
+	if err = validatorLib.ValidateStruct(req); err != nil {
+		code = "[HANDLER] EditContentByID - 3"
+
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+	idParam := c.Params("contentID")
+
+	contentID, err := conv.StringToInt64(idParam)
+
+	if err != nil {
+		code = "[HANDLER] EditContentByID - 4"
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+	
+	tags := strings.Split(req.Tags, ",")
+
+	reqEntity := entity.ContentEntity{
+		ID			: contentID,
+		Title      	: req.Title,
+		Excerpt     : req.Excerpt,
+		Description : req.Description,
+		Image    	: req.Image,
+		Tags	 	: tags,
+		Status		: req.Status,
+		CategoryID 	: req.CategoryID,
+		CreatedByID : int64(userID),
+	}
+
+	err = ch.contentService.EditContentByID(c.Context(), reqEntity)
+
+	if err != nil {
+		code = "[HANDLER] EditContentByID - 5"
+
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
+	}
+
+	defaultSuccessResponse.Meta.Status = true
+	defaultSuccessResponse.Meta.Message = "Content updated successfully"
+	defaultSuccessResponse.Data = nil
+
+	return c.JSON(defaultSuccessResponse)
 }
 
 // GetContentByID implements ContentHandler.
@@ -277,7 +360,87 @@ func (ch *contentHandler) GetContents(c *fiber.Ctx) error {
 
 // UploadImageR2 implements ContentHandler.
 func (ch *contentHandler) UploadImageR2(c *fiber.Ctx) error {
-	panic("unimplemented")
+	claims := c.Locals("user").(*entity.JwtData)
+
+	userID := claims.UserID
+
+	if userID == 0 {
+		code = "[HANDLER] UploadImageR2 - 1"
+		log.Errorw(code, err)
+
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = "Unauthorized access"
+		return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
+	}
+
+	var req request.FileUploadRequest
+
+	file, err := c.FormFile("image")
+
+
+	if err != nil {
+		code = "[HANDLER] UploadImageR2 - 2"
+		log.Errorw(code, err)
+			
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = "invalid request body"
+		
+		return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+	}
+
+	if err = c.SaveFile(file, fmt.Sprintf("./temp/content/%s", file.Filename)); err != nil {
+		code = "[HANDLER] UploadImageR2 - 3"
+		log.Errorw(code, err)
+			
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+		
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)	
+	}
+
+	req.Image = fmt.Sprintf("./temp/content/%s", file.Filename)
+
+	reqEntity := entity.FileUploadEntity{
+		Name: fmt.Sprintf("%d-%d", claims.UserID, time.Now().UnixNano()),
+		Path: req.Image,
+	}
+
+	imageUrl, err := ch.contentService.UploadImageR2(c.Context(), reqEntity)
+
+
+	if err != nil {
+		code = "[HANDLER] UploadImageR2 - 4"
+		log.Errorw(code, err)
+			
+		errorResp.Meta.Status = false
+		errorResp.Meta.Message = err.Error()
+		
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)	
+	}
+
+	if req.Image != "" {
+		err = os.Remove(req.Image)
+
+		if err != nil {
+			code = "[HANDLER] UploadImageR2 - 5"
+			log.Errorw(code, err)
+				
+			errorResp.Meta.Status = false
+			errorResp.Meta.Message = err.Error()
+			
+			return c.Status(fiber.StatusInternalServerError).JSON(errorResp)	
+		}
+	}
+
+	urlImageResponse := map[string]interface{}{
+		"urlImage": imageUrl,
+	}
+
+	defaultSuccessResponse.Meta.Status = true
+	defaultSuccessResponse.Meta.Message = "Image uploaded succesfully"
+	defaultSuccessResponse.Data = urlImageResponse
+
+	return c.Status(fiber.StatusCreated).JSON(defaultSuccessResponse)
 }
 
 func NewContentHandler(contentService service.ContentService) ContentHandler {

@@ -47,7 +47,17 @@ func (c *contentService) DeleteContent(ctx context.Context, id int64) error {
 
 // EditContentByID implements ContentService.
 func (c *contentService) EditContentByID(ctx context.Context, req entity.ContentEntity) error {
-	panic("unimplemented")
+	err := c.contentRepository.EditCategoryByID(ctx, req)
+
+	if err != nil {
+		code = "[SERVICE] EditContentByID - 1"
+		
+		log.Errorw(code, err)
+
+		return err
+	}
+
+	return nil
 }
 
 // GetContentByID implements ContentService.
@@ -82,7 +92,17 @@ func (c *contentService) GetContents(ctx context.Context) ([]entity.ContentEntit
 
 // UploadImageR2 implements ContentService.
 func (c *contentService) UploadImageR2(ctx context.Context, req entity.FileUploadEntity) (string, error) {
-	panic("unimplemented")
+	urlImage, err := c.r2.UploudImage(&req)
+
+	if err != nil {
+		code = "[SERVICE] UploadImageR2 - 1"
+		
+		log.Errorw(code, err)
+
+		return "", err
+	}
+
+	return urlImage, nil
 }
 
 func NewContentService(contentRepository repository.ContentRepository, cfg *config.Config, r2 cloudflare.CloudflareR2Adapter) ContentService {
