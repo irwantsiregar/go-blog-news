@@ -401,12 +401,11 @@ func (ch *contentHandler) UploadImageR2(c *fiber.Ctx) error {
 	req.Image = fmt.Sprintf("./temp/content/%s", file.Filename)
 
 	reqEntity := entity.FileUploadEntity{
-		Name: fmt.Sprintf("%d-%d", claims.UserID, time.Now().UnixNano()),
+		Name: fmt.Sprintf("%d-%d", int64(claims.UserID), time.Now().UnixNano()),
 		Path: req.Image,
 	}
 
 	imageUrl, err := ch.contentService.UploadImageR2(c.Context(), reqEntity)
-
 
 	if err != nil {
 		code = "[HANDLER] UploadImageR2 - 4"
