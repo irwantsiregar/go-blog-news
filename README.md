@@ -70,7 +70,14 @@
     $ go get github.com/go-playground/validator/v10
   ```
 
-<!--
+- Swagger API Docs [https://docs.gofiber.io/contrib/swagger/#examples], Example File [https://github.com/gofiber/recipes/tree/master/swagger/docs]
+  Swagger Specs - Basic Structure [https://swagger.io/docs/specification/v3_0/basic-structure/]
+
+  ```bash
+    $ go get github.com/gofiber/contrib/swagger
+  ```
+
+  <!--
 
 ### Configuration
 
