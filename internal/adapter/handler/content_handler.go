@@ -88,16 +88,13 @@ func (ch *contentHandler) GetContentDetail(c *fiber.Ctx) error {
 // GetContentsWithQuery implements ContentHandler.
 func (ch *contentHandler) GetContentsWithQuery(c *fiber.Ctx) error {
 	page := 1
-	limit := 6
-
 	if c.Query("page") != "" {
 		page, err = conv.StringToInt(c.Query("page"))
-
+	
 		if err != nil {
 			code := "[HANDLER] GetContentWithQuery - 1"
-
 			log.Errorw(code, err)
-
+	
 			errorResp.Meta.Status = false
 			errorResp.Meta.Message = "Invalid page number"
 
@@ -105,14 +102,14 @@ func (ch *contentHandler) GetContentsWithQuery(c *fiber.Ctx) error {
 		}
 	}
 
+	limit := 6
 	if c.Query("limit") != "" {
 		limit, err = conv.StringToInt(c.Query("limit"))
-
+	
 		if err != nil {
 			code := "[HANDLER] GetContentWithQuery - 2"
-
 			log.Errorw(code, err)
-
+	
 			errorResp.Meta.Status = false
 			errorResp.Meta.Message = "Invalid limit number"
 
@@ -121,19 +118,33 @@ func (ch *contentHandler) GetContentsWithQuery(c *fiber.Ctx) error {
 	}
 
 	orderBy := "created_at"
-	orderType := "desc"
-	search := ""
-
 	if c.Query("orderBy") != "" {
 		orderBy = c.Query("orderBy")
 	}
 
+	orderType := "desc"
 	if c.Query("orderType") != "" {
 		orderType = c.Query("orderType")
 	}
 
+	search := ""
 	if c.Query("search") != "" {
 		search = c.Query("search")
+	}
+
+	categoryID := 0
+	if c.Query("categoryID") != "" {
+		categoryID, err = conv.StringToInt(c.Query("categoryID"))
+	
+		if err != nil {
+			code := "[HANDLER] GetContentWithQuery - 3"
+			log.Errorw(code, err)
+	
+			errorResp.Meta.Status = false
+			errorResp.Meta.Message = "Invalid category ID"
+
+			return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+		}
 	}
 
 	reqEntity := entity.QueryString{
@@ -142,25 +153,29 @@ func (ch *contentHandler) GetContentsWithQuery(c *fiber.Ctx) error {
 		OrderBy:    orderBy,
 		OrderType:  orderType,
 		Search:     search,
-		Status: "PUBLISH",
+		Status:     "PUBLISH",
+		CategoryID: int64(categoryID),
 	}
 
-	results, err := ch.contentService.GetContents(c.Context(), reqEntity)
-
+	results, totalData, totalPages, err := ch.contentService.GetContents(c.Context(), reqEntity)
+	
 	if err != nil {
-		code = "[HANDLER] GetContentWithQuery - 3"
+		code := "[HANDLER] GetContentWithQuery - 4"
 		log.Errorw(code, err)
-
+	
 		errorResp.Meta.Status = false
 		errorResp.Meta.Message = err.Error()
 
 		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
 	}
 
-	contentResponses := []response.ContentResponse{}
+	defaultSuccessResponse.Meta.Status = true
+	defaultSuccessResponse.Meta.Message = "Success"
 
+	respContents := []response.ContentResponse{}
+	
 	for _, content := range results {
-		contentItem := response.ContentResponse{
+		respContent := response.ContentResponse{
 			ID:           content.ID,
 			Title:        content.Title,
 			Excerpt:      content.Excerpt,
@@ -170,19 +185,23 @@ func (ch *contentHandler) GetContentsWithQuery(c *fiber.Ctx) error {
 			Status:       content.Status,
 			CategoryID:   content.CategoryID,
 			CreatedByID:  content.CreatedByID,
-			CreatedAt:    content.CreatedAt.Format(time.RFC3339),
+			CreatedAt:    content.CreatedAt.Local().Format("02 January 2006"),
 			CategoryName: content.Category.Title,
 			Author:       content.User.Name,
 		}
 
-		contentResponses = append(contentResponses, contentItem)
+		respContents = append(respContents, respContent)
 	}
 
-	defaultSuccessResponse.Meta.Status = true
-	defaultSuccessResponse.Pagination = nil
-	defaultSuccessResponse.Meta.Message = "Contents fetched succesfully"
-	defaultSuccessResponse.Data = contentResponses
-
+	defaultSuccessResponse.Data = respContents
+	
+	defaultSuccessResponse.Pagination = &response.PaginationResponse{
+		TotalRecords: int(totalData),
+		Page:         page,
+		PerPage:      limit,
+		TotalPages:   int(totalPages),
+	}
+	
 	return c.JSON(defaultSuccessResponse)
 }
 
@@ -458,43 +477,105 @@ func (ch *contentHandler) GetContentByID(c *fiber.Ctx) error {
 // GetContents implements ContentHandler.
 func (ch *contentHandler) GetContents(c *fiber.Ctx) error {
 	claims := c.Locals("user").(*entity.JwtData)
-
-	userID := claims.UserID
-
-	if userID == 0 {
-		code = "[HANDLER] GetContents - 1"
+	
+	if claims.UserID == 0 {
+		code := "[HANDLER] GetContents - 1"
 		log.Errorw(code, err)
-
+	
 		errorResp.Meta.Status = false
 		errorResp.Meta.Message = "Unauthorized access"
+
 		return c.Status(fiber.StatusUnauthorized).JSON(errorResp)
 	}
 
-	reqEntity := entity.QueryString{
-		Limit:      0,
-		Page:       0,
-		OrderBy:    "",
-		OrderType:  "",
-		Search:     "",
-		CategoryID: 0,
+	page := 1
+	if c.Query("page") != "" {
+		page, err = conv.StringToInt(c.Query("page"))
+	
+		if err != nil {
+			code := "[HANDLER] GetContents - 2"
+			log.Errorw(code, err)
+	
+			errorResp.Meta.Status = false
+			errorResp.Meta.Message = "Invalid page number"
+
+			return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+		}
 	}
 
-	results, err := ch.contentService.GetContents(c.Context(), reqEntity)
+	limit := 10
+	if c.Query("limit") != "" {
+		limit, err = conv.StringToInt(c.Query("limit"))
+	
+		if err != nil {
+			code := "[HANDLER] GetContents - 3"
+			log.Errorw(code, err)
+	
+			errorResp.Meta.Status = false
+			errorResp.Meta.Message = "Invalid limit number"
 
+			return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+		}
+	}
+
+	orderBy := "created_at"
+	if c.Query("orderBy") != "" {
+		orderBy = c.Query("orderBy")
+	}
+
+	orderType := "desc"
+	if c.Query("orderType") != "" {
+		orderType = c.Query("orderType")
+	}
+
+	search := ""
+	if c.Query("search") != "" {
+		search = c.Query("search")
+	}
+
+	categoryID := 0
+	if c.Query("categoryID") != "" {
+		categoryID, err = conv.StringToInt(c.Query("categoryID"))
+	
+		if err != nil {
+			code := "[HANDLER] GetContents - 4"
+			log.Errorw(code, err)
+	
+			errorResp.Meta.Status = false
+			errorResp.Meta.Message = "Invalid category ID"
+
+			return c.Status(fiber.StatusBadRequest).JSON(errorResp)
+		}
+	}
+
+	reqEntity := entity.QueryString{
+		Limit:      limit,
+		Page:       page,
+		OrderBy:    orderBy,
+		OrderType:  orderType,
+		Search:     search,
+		CategoryID: int64(categoryID),
+	}
+
+	results, totalData, totalPages, err := ch.contentService.GetContents(c.Context(), reqEntity)
+	
 	if err != nil {
-		code = "[HANDLER] GetContents - 2"
+		code := "[HANDLER] GetContents - 5"
 		log.Errorw(code, err)
-
+	
 		errorResp.Meta.Status = false
 		errorResp.Meta.Message = err.Error()
 
 		return c.Status(fiber.StatusInternalServerError).JSON(errorResp)
 	}
 
-	contentResponses := []response.ContentResponse{}
+	defaultSuccessResponse.Meta.Status = true
+	defaultSuccessResponse.Meta.Message = "Success"
 
+	responseContents := []response.ContentResponse{}
+	
 	for _, content := range results {
-		contentItem := response.ContentResponse{
+		respContent := response.ContentResponse{
 			ID:           content.ID,
 			Title:        content.Title,
 			Excerpt:      content.Excerpt,
@@ -504,18 +585,22 @@ func (ch *contentHandler) GetContents(c *fiber.Ctx) error {
 			Status:       content.Status,
 			CategoryID:   content.CategoryID,
 			CreatedByID:  content.CreatedByID,
-			CreatedAt:    content.CreatedAt.Format(time.RFC3339),
+			CreatedAt:    content.CreatedAt.Local().Format("02 January 2006"),
 			CategoryName: content.Category.Title,
 			Author:       content.User.Name,
 		}
 
-		contentResponses = append(contentResponses, contentItem)
+		responseContents = append(responseContents, respContent)
 	}
 
-	defaultSuccessResponse.Meta.Status = true
-	defaultSuccessResponse.Pagination = nil
-	defaultSuccessResponse.Meta.Message = "Contents fetched succesfully"
-	defaultSuccessResponse.Data = contentResponses
+	defaultSuccessResponse.Data = responseContents
+
+	defaultSuccessResponse.Pagination = &response.PaginationResponse{
+		TotalRecords: int(totalData),
+		Page:         page,
+		PerPage:      limit,
+		TotalPages:   int(totalPages),
+	}
 
 	return c.JSON(defaultSuccessResponse)
 }
