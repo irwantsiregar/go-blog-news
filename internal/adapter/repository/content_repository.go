@@ -4,6 +4,7 @@ import (
 	"bwanews/internal/core/domain/entity"
 	"bwanews/internal/core/domain/model"
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/gofiber/fiber/v2/log"
@@ -12,7 +13,7 @@ import (
 )
 
 type ContentRepository interface {
-	GetContents(ctx context.Context) ([]entity.ContentEntity, error)
+	GetContents(ctx context.Context, query entity.QueryString) ([]entity.ContentEntity, error)
 	GetContentByID(ctx context.Context, id int64) (*entity.ContentEntity, error)
 	CreateContent(ctx context.Context, req entity.ContentEntity) error
 	EditCategoryByID(ctx context.Context, req entity.ContentEntity) error
@@ -106,10 +107,26 @@ func (c *contentRepository) GetContentByID(ctx context.Context, id int64) (*enti
 }
 
 // GetContents implements ContentRepository.
-func (c *contentRepository) GetContents(ctx context.Context) ([]entity.ContentEntity, error) {
+func (c *contentRepository) GetContents(ctx context.Context, query entity.QueryString) ([]entity.ContentEntity, error) {
 	var modelContents []model.Content
 
-	err = c.db.Order("created_at DESC").Preload(clause.Associations).Find(&modelContents).Error
+	order := fmt.Sprintf("%s %s", query.OrderBy, query.OrderType)
+	offset := (query.Page - 1) * query.Limit
+	status := ""
+
+	if query.Status != "" {
+		status = query.Status
+	}
+
+	// err = c.db.Order("created_at DESC").Preload(clause.Associations).Find(&modelContents).Error
+	err = c.db.Preload(clause.Associations).
+	Where("title ilike ? OR excerpt ilike ? OR description ilike ?", "%"+ query.Search +"%", "%"+ query.Search +"%", "%"+ query.Search +"%").
+	Where("status LIKE ?", "%"+ status + "%").
+	Order(order).
+	Limit(query.Limit).
+	Offset(offset).
+	Find(&modelContents).Error
+
 
 	if err != nil {
 		code = "[REPOSITORY] GetContents - 1"
