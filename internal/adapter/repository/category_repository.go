@@ -23,7 +23,6 @@ type categoryRepository struct {
 	db *gorm.DB
 }
 
-
 // CreateCategory implements CategoryRepository.
 func (c *categoryRepository) CreateCategory(ctx context.Context, req entity.CategoryEntity) error {
 	var countSlug int64

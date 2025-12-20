@@ -2,7 +2,7 @@
 
 # Full-Stack Golang Next JS: Blog Portal News
 
-## Library Stacks
+## Package Stacks
 
 - [Golang Migrate](https://github.com/golang-migrate/migrate)
 
@@ -70,7 +70,7 @@
   ```
 
 - [Swagger API Docs](https://docs.gofiber.io/contrib/swagger/#examples), [Examples File](https://github.com/gofiber/recipes/tree/master/swagger/docs),
-  [Swagger Specs - Basic Structure](https://swagger.io/docs/specification/v3_0/basic-structure)
+- [Swagger Specs - Basic Structure](https://swagger.io/docs/specification/v3_0/basic-structure)
 
   ```bash
     $ go get github.com/gofiber/contrib/swagger
